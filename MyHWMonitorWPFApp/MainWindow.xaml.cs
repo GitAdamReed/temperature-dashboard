@@ -22,16 +22,19 @@ namespace MyHWMonitorWPFApp
     {
         private Computer _computer;
         private DispatcherTimer _timer;
-        public ObservableCollection<SensorItem> Sensors { get; set; } = new ObservableCollection<SensorItem>();
+        public ObservableCollection<SensorItem> CpuSensors { get; set; } = new ObservableCollection<SensorItem>();
+        public ObservableCollection<SensorItem> GpuSensors { get; set; } = new ObservableCollection<SensorItem>();
 
         public MainWindow()
         {
             InitializeComponent();
-            SensorListView.ItemsSource = Sensors;
+            CpuSensorListView.ItemsSource = CpuSensors;
+            GpuSensorListView.ItemsSource = GpuSensors;
 
             _computer = new Computer
             {
-                IsCpuEnabled = true
+                IsCpuEnabled = true,
+                IsGpuEnabled = true
             };
             _computer.Open();
 
@@ -45,19 +48,33 @@ namespace MyHWMonitorWPFApp
 
         private void UpdateSensors(object sender, EventArgs e)
         {
-            Sensors.Clear();
+            CpuSensors.Clear();
+            GpuSensors.Clear();
 
             foreach (var hardware in _computer.Hardware)
             {
-                if (hardware.HardwareType == HardwareType.Cpu)
+                if (hardware.HardwareType == HardwareType.Cpu
+                    || hardware.HardwareType == HardwareType.GpuNvidia
+                    || hardware.HardwareType == HardwareType.GpuAmd
+                    || hardware.HardwareType == HardwareType.GpuIntel)
                 {
                     hardware.Update();
 
                     foreach (var sensor in hardware.Sensors)
                     {
-                        if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && !sensor.Name.Contains("TjMax"))
+                        if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && !sensor.Name.Contains("TjMax") && hardware.HardwareType == HardwareType.Cpu)
                         {
-                            Sensors.Add(new SensorItem
+                            CpuSensors.Add(new SensorItem
+                            {
+                                Name = sensor.Name,
+                                Value = $"{sensor.Value.Value:F1}",
+                                Min = $"{sensor.Min:F1}",
+                                Max = $"{sensor.Max:F1}"
+                            });
+                        }
+                        else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd)
+                        {
+                            GpuSensors.Add(new SensorItem
                             {
                                 Name = sensor.Name,
                                 Value = $"{sensor.Value.Value:F1}",
