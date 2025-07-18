@@ -48,43 +48,60 @@ namespace MyHWMonitorWPFApp
 
         private void UpdateSensors(object sender, EventArgs e)
         {
-            CpuSensors.Clear();
-            GpuSensors.Clear();
-
-            foreach (var hardware in _computer.Hardware)
+            // Background thread
+            Task.Run(() => 
             {
-                if (hardware.HardwareType == HardwareType.Cpu
-                    || hardware.HardwareType == HardwareType.GpuNvidia
-                    || hardware.HardwareType == HardwareType.GpuAmd
-                    || hardware.HardwareType == HardwareType.GpuIntel)
-                {
-                    hardware.Update();
+                var cpuList = new List<SensorItem>();
+                var gpuList = new List<SensorItem>();
 
-                    foreach (var sensor in hardware.Sensors)
+                foreach (var hardware in _computer.Hardware)
+                {
+                    if (hardware.HardwareType == HardwareType.Cpu
+                        || hardware.HardwareType == HardwareType.GpuNvidia
+                        || hardware.HardwareType == HardwareType.GpuAmd
+                        || hardware.HardwareType == HardwareType.GpuIntel)
                     {
-                        if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && !sensor.Name.Contains("TjMax") && hardware.HardwareType == HardwareType.Cpu)
+                        hardware.Update();
+
+                        foreach (var sensor in hardware.Sensors)
                         {
-                            CpuSensors.Add(new SensorItem
+                            if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && !sensor.Name.Contains("TjMax") && hardware.HardwareType == HardwareType.Cpu)
                             {
-                                Name = sensor.Name,
-                                Value = $"{sensor.Value.Value:F1}",
-                                Min = $"{sensor.Min:F1}",
-                                Max = $"{sensor.Max:F1}"
-                            });
-                        }
-                        else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd)
-                        {
-                            GpuSensors.Add(new SensorItem
+                                cpuList.Add(new SensorItem
+                                {
+                                    Name = sensor.Name,
+                                    Value = $"{sensor.Value.Value:F1}",
+                                    Min = $"{sensor.Min:F1}",
+                                    Max = $"{sensor.Max:F1}"
+                                });
+                            }
+                            else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd)
                             {
-                                Name = sensor.Name,
-                                Value = $"{sensor.Value.Value:F1}",
-                                Min = $"{sensor.Min:F1}",
-                                Max = $"{sensor.Max:F1}"
-                            });
+                                gpuList.Add(new SensorItem
+                                {
+                                    Name = sensor.Name,
+                                    Value = $"{sensor.Value.Value:F1}",
+                                    Min = $"{sensor.Min:F1}",
+                                    Max = $"{sensor.Max:F1}"
+                                });
+                            }
                         }
                     }
                 }
-            }
+
+                // UI thread
+                // Dispatch sensor updates to UI
+                Dispatcher.Invoke(() =>
+                {
+                    CpuSensors.Clear();
+                    foreach (var item in cpuList)
+                        CpuSensors.Add(item);
+
+                    GpuSensors.Clear();
+                    foreach (var item in gpuList)
+                        GpuSensors.Add(item);
+                });
+            });
         }
         public class SensorItem
         {
