@@ -55,5 +55,22 @@
                 </lvc:CartesianChart.AxisY>
             </lvc:CartesianChart>
         </GroupBox>
+        <GroupBox Header="GPU Core Temp (°C)" Grid.Column="1" Grid.Row="1">
+            <lvc:CartesianChart Series="{Binding GpuChartSeries}" Height="200" Margin="0,0,0,20">
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis Title="Time" LabelFormatter="{Binding TimeFormatter}">
+                        <lvc:Axis.MinValue>
+                            <Binding Path="GpuXAxisMin" />
+                        </lvc:Axis.MinValue>
+                        <lvc:Axis.MaxValue>
+                            <Binding Path="GpuXAxisMax" />
+                        </lvc:Axis.MaxValue>
+                    </lvc:Axis>
+                </lvc:CartesianChart.AxisX>
+                <lvc:CartesianChart.AxisY>
+                    <lvc:Axis Title="Temperature (°C)" MinValue="0" MaxValue="100"/>
+                </lvc:CartesianChart.AxisY>
+            </lvc:CartesianChart>
+        </GroupBox>
     </Grid>
 </Window>
