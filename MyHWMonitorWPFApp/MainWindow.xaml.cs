@@ -1,5 +1,9 @@
 ﻿using LibreHardwareMonitor.Hardware;
+using LiveCharts;
+using LiveCharts.Defaults;
+using LiveCharts.Wpf;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Windows;
@@ -18,18 +22,54 @@ namespace MyHWMonitorWPFApp
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private Computer _computer;
         private DispatcherTimer _timer;
+        private DateTime _startTime = DateTime.Now;
+
         public ObservableCollection<SensorItem> CpuSensors { get; set; } = new ObservableCollection<SensorItem>();
         public ObservableCollection<SensorItem> GpuSensors { get; set; } = new ObservableCollection<SensorItem>();
+        public SeriesCollection CpuChartSeries { get; set; }
+        public SeriesCollection GpuChartSeries { get; set; }
+
+        private ChartValues<ObservablePoint> _cpuPoints = new();
+        private ChartValues<DateTimePoint> _gpuPoints = new();
+
+        public double CpuXAxisMin => _cpuPoints.Any() ? _cpuPoints.Min(p => p.X) : 0;
+        public double CpuXAxisMax => _cpuPoints.Any() ? _cpuPoints.Max(p => p.X) : 60;
+
+        public Func<double, string> TimeFormatter { get; set; }
 
         public MainWindow()
         {
             InitializeComponent();
             CpuSensorListView.ItemsSource = CpuSensors;
             GpuSensorListView.ItemsSource = GpuSensors;
+            CpuChartSeries = new SeriesCollection
+            {
+                new LineSeries
+                {
+                    Title = "CPU Temp",
+                    Values = _cpuPoints,
+                    PointGeometry = null, // optional for smoother line
+                    LineSmoothness = 0
+                }
+            };
+
+            GpuChartSeries = new SeriesCollection
+            {
+                new LineSeries
+                {
+                    Title = "GPU Temp",
+                    Values = _gpuPoints,
+                    PointGeometry = null
+                }
+            };
+
+            DataContext = this;
+
+            TimeFormatter = value => $"{value:F0}s";
 
             _computer = new Computer
             {
@@ -48,12 +88,15 @@ namespace MyHWMonitorWPFApp
 
         private void UpdateSensors(object sender, EventArgs e)
         {
+            var cpuList = new List<SensorItem>();
+            var gpuList = new List<SensorItem>();
+            float? latestCpuTemp = null;
+            float? latestGpuTemp = null;
+            int maxSeconds = 60; // Keep last 60 seconds of data
+
             // Background thread
             Task.Run(() => 
             {
-                var cpuList = new List<SensorItem>();
-                var gpuList = new List<SensorItem>();
-
                 foreach (var hardware in _computer.Hardware)
                 {
                     if (hardware.HardwareType == HardwareType.Cpu
@@ -74,8 +117,13 @@ namespace MyHWMonitorWPFApp
                                     Min = $"{sensor.Min:F1}",
                                     Max = $"{sensor.Max:F1}"
                                 });
+
+                                if (sensor.Name.Contains("CPU Package"))
+                                {
+                                    latestCpuTemp ??= sensor.Value.Value;
+                                }
                             }
-                            else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd)
+                            else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && (hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd))
                             {
                                 gpuList.Add(new SensorItem
                                 {
@@ -100,9 +148,27 @@ namespace MyHWMonitorWPFApp
                     GpuSensors.Clear();
                     foreach (var item in gpuList)
                         GpuSensors.Add(item);
+
+                    var now = DateTime.Now;
+
+                    if (latestCpuTemp.HasValue)
+                    {
+                        double elapsedSeconds = (now - _startTime).TotalSeconds;
+                        _cpuPoints.Add(new ObservablePoint(elapsedSeconds, latestCpuTemp.Value));
+                        while (_cpuPoints.Any() && _cpuPoints[0].X < elapsedSeconds - maxSeconds)
+                            _cpuPoints.RemoveAt(0);
+                    }
+
+                    OnPropertyChanged(nameof(CpuXAxisMin));
+                    OnPropertyChanged(nameof(CpuXAxisMax));
                 });
             });
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string name) =>
+           PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
         public class SensorItem
         {
             public string Name { get; set; }
