@@ -24,12 +24,15 @@ namespace MyHWMonitorWPFApp
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private Computer _computer;
-        private DispatcherTimer _timer;
-        private DateTime _startTime = DateTime.Now;
-        private ChartValues<ObservablePoint> _cpuPoints = new();
-        private ChartValues<ObservablePoint> _gpuPoints = new();
+        private readonly Computer _computer;
+        private readonly DispatcherTimer _timer;
+        private readonly DateTime _startTime = DateTime.Now;
+        private readonly ChartValues<ObservablePoint> _cpuPoints = new();
+        private readonly ChartValues<ObservablePoint> _gpuPoints = new();
 
+        public string CpuName { get; init; }
+        public string GpuName { get; init; }
+        
         public ObservableCollection<SensorItem> CpuSensors { get; set; } = new ObservableCollection<SensorItem>();
         public ObservableCollection<SensorItem> GpuSensors { get; set; } = new ObservableCollection<SensorItem>();
         public SeriesCollection CpuChartSeries { get; set; }
@@ -79,6 +82,9 @@ namespace MyHWMonitorWPFApp
                 IsGpuEnabled = true
             };
             _computer.Open();
+
+            CpuName = GetCpuName(_computer);
+            GpuName = GetGpuName(_computer);
 
             _timer = new DispatcherTimer
             {
@@ -179,6 +185,19 @@ namespace MyHWMonitorWPFApp
                     OnPropertyChanged(nameof(GpuXAxisMax));
                 });
             });
+        }
+
+        private static string GetCpuName(Computer computer)
+        {
+            var cpu = computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
+            return cpu == null ? "CPU" : cpu.Name;
+        }
+
+        private static string GetGpuName(Computer computer)
+        {
+            List<HardwareType> gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
+            var gpu = computer.Hardware.FirstOrDefault(h => gpuTypes.Any(t => t == h.HardwareType));
+            return gpu == null ? "GPU" : gpu.Name;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
