@@ -2,6 +2,8 @@
 using LiveCharts;
 using LiveCharts.Defaults;
 using LiveCharts.Wpf;
+using MyHWMonitorWPFApp.Models;
+using MyHWMonitorWPFApp.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -24,11 +26,11 @@ namespace MyHWMonitorWPFApp
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        private readonly Computer _computer;
+        private readonly HardwareService _hwService;
         private readonly DispatcherTimer _timer;
         private readonly DateTime _startTime = DateTime.Now;
-        private readonly ChartValues<ObservablePoint> _cpuPoints = new();
-        private readonly ChartValues<ObservablePoint> _gpuPoints = new();
+        private readonly ChartValues<ObservablePoint> _cpuPoints = [];
+        private readonly ChartValues<ObservablePoint> _gpuPoints = [];
 
         public string CpuName { get; init; }
         public string GpuName { get; init; }
@@ -76,16 +78,10 @@ namespace MyHWMonitorWPFApp
 
             TimeFormatter = value => $"{value:F0}s";
 
-            _computer = new Computer
-            {
-                IsCpuEnabled = true,
-                IsGpuEnabled = true
-            };
-            _computer.Open();
-
-            CpuName = GetCpuName(_computer);
-            GpuName = GetGpuName(_computer);
-
+            _hwService = new HardwareService();
+            CpuName = _hwService.CpuName;
+            GpuName = _hwService.GpuName;
+            
             _timer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(1)
@@ -96,85 +92,39 @@ namespace MyHWMonitorWPFApp
 
         private void UpdateSensors(object sender, EventArgs e)
         {
-            var cpuList = new List<SensorItem>();
-            var gpuList = new List<SensorItem>();
-            float? latestCpuTemp = null;
-            float? latestGpuTemp = null;
             int maxSeconds = 60; // Keep last 60 seconds of data
 
             // Background thread
             Task.Run(() => 
             {
-                foreach (var hardware in _computer.Hardware)
-                {
-                    if (hardware.HardwareType == HardwareType.Cpu
-                        || hardware.HardwareType == HardwareType.GpuNvidia
-                        || hardware.HardwareType == HardwareType.GpuAmd
-                        || hardware.HardwareType == HardwareType.GpuIntel)
-                    {
-                        hardware.Update();
-
-                        foreach (var sensor in hardware.Sensors)
-                        {
-                            if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && !sensor.Name.Contains("TjMax") && hardware.HardwareType == HardwareType.Cpu)
-                            {
-                                cpuList.Add(new SensorItem
-                                {
-                                    Name = sensor.Name,
-                                    Value = $"{sensor.Value.Value:F1}",
-                                    Min = $"{sensor.Min:F1}",
-                                    Max = $"{sensor.Max:F1}"
-                                });
-
-                                if (sensor.Name.Contains("CPU Package"))
-                                {
-                                    latestCpuTemp ??= sensor.Value.Value;
-                                }
-                            }
-                            else if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue && (hardware.HardwareType == HardwareType.GpuNvidia || hardware.HardwareType == HardwareType.GpuAmd))
-                            {
-                                gpuList.Add(new SensorItem
-                                {
-                                    Name = sensor.Name,
-                                    Value = $"{sensor.Value.Value:F1}",
-                                    Min = $"{sensor.Min:F1}",
-                                    Max = $"{sensor.Max:F1}"
-                                });
-
-                                if (sensor.Name.Contains("GPU Core"))
-                                {
-                                    latestGpuTemp ??= sensor.Value.Value;
-                                }
-                            }
-                        }
-                    }
-                }
+                var (cpuSensorItems, currentCpuPackageTemp) = _hwService.GetCpuSensorData();
+                var (gpuSensorItems, currentGpuCoreTemp) = _hwService.GetGpuSensorData();
 
                 // UI thread
                 // Dispatch sensor updates to UI
                 Dispatcher.Invoke(() =>
                 {
                     CpuSensors.Clear();
-                    foreach (var item in cpuList)
+                    foreach (var item in cpuSensorItems)
                         CpuSensors.Add(item);
 
                     GpuSensors.Clear();
-                    foreach (var item in gpuList)
+                    foreach (var item in gpuSensorItems)
                         GpuSensors.Add(item);
 
                     var now = DateTime.Now;
                     double elapsedSeconds = (now - _startTime).TotalSeconds;
 
-                    if (latestCpuTemp.HasValue)
+                    if (currentCpuPackageTemp.HasValue)
                     {
-                        _cpuPoints.Add(new ObservablePoint(elapsedSeconds, latestCpuTemp.Value));
+                        _cpuPoints.Add(new ObservablePoint(elapsedSeconds, currentCpuPackageTemp.Value));
                     }
                     while (_cpuPoints.Any() && _cpuPoints[0].X < elapsedSeconds - maxSeconds)
                         _cpuPoints.RemoveAt(0);
 
-                    if (latestGpuTemp.HasValue) 
+                    if (currentGpuCoreTemp.HasValue) 
                     {
-                        _gpuPoints.Add(new ObservablePoint(elapsedSeconds, latestGpuTemp.Value));
+                        _gpuPoints.Add(new ObservablePoint(elapsedSeconds, currentGpuCoreTemp.Value));
                     }
                     while (_gpuPoints.Any() && _gpuPoints[0].X < elapsedSeconds - maxSeconds)
                         _gpuPoints.RemoveAt(0);
@@ -187,29 +137,8 @@ namespace MyHWMonitorWPFApp
             });
         }
 
-        private static string GetCpuName(Computer computer)
-        {
-            var cpu = computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
-            return cpu == null ? "CPU" : cpu.Name;
-        }
-
-        private static string GetGpuName(Computer computer)
-        {
-            List<HardwareType> gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
-            var gpu = computer.Hardware.FirstOrDefault(h => gpuTypes.Any(t => t == h.HardwareType));
-            return gpu == null ? "GPU" : gpu.Name;
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) =>
            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        public class SensorItem
-        {
-            public string Name { get; set; }
-            public string Value { get; set; }
-            public string Min { get; set; }
-            public string Max { get; set; }
-        }
     }
 }
