@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MyHWMonitorWPFApp.Models;
+using MyHWMonitorWPFApp.Interfaces;
 
 namespace MyHWMonitorWPFApp.Services
 {
-    public class HardwareService
+    public class HardwareService : IHardwareService
     {
         private readonly Computer _computer;
         private readonly HardwareType[] _gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
@@ -16,15 +17,9 @@ namespace MyHWMonitorWPFApp.Services
         public string CpuName { get; init; }
         public string GpuName { get; init; }
 
-        public HardwareService()
+        public HardwareService(Computer computer)
         {
-            _computer = new Computer
-            {
-                IsCpuEnabled = true,
-                IsGpuEnabled = true
-            };
-            _computer.Open();
-
+            _computer = computer;
             CpuName = GetCpuName();
             GpuName = GetGpuName();
         }

@@ -78,7 +78,14 @@ namespace MyHWMonitorWPFApp
 
             TimeFormatter = value => $"{value:F0}s";
 
-            _hwService = new HardwareService();
+            var computer = new Computer
+            {
+                IsCpuEnabled = true,
+                IsGpuEnabled = true
+            };
+            computer.Open();
+            _hwService = new HardwareService(computer);
+
             CpuName = _hwService.CpuName;
             GpuName = _hwService.GpuName;
             
