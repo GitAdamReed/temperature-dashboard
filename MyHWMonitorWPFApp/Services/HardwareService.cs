@@ -11,13 +11,13 @@ namespace MyHWMonitorWPFApp.Services
 {
     public class HardwareService : IHardwareService
     {
-        private readonly Computer _computer;
+        private readonly IComputer _computer;
         private readonly HardwareType[] _gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
 
         public string CpuName { get; init; }
         public string GpuName { get; init; }
 
-        public HardwareService(Computer computer)
+        public HardwareService(IComputer computer)
         {
             _computer = computer;
             CpuName = GetCpuName();
