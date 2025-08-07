@@ -22,12 +22,14 @@ namespace MyHWMonitorWPFAppUnitTests
             Assert.That(hwService, Is.InstanceOf<HardwareService>());
         }
 
-        [Test]
-        public void GetGpuName_WhenHardwareIsAmdGpu_ReturnsCorrectName()
+        [TestCase(HardwareType.GpuNvidia)]
+        [TestCase(HardwareType.GpuAmd)]
+        [TestCase(HardwareType.GpuIntel)]
+        public void GetGpuName_WhenHardwareIsValidGpuType_ReturnsCorrectName(HardwareType gpuType)
         {
             var stubHardware = new Mock<IHardware>();
-            stubHardware.SetupGet(h => h.HardwareType).Returns(HardwareType.GpuAmd);
-            string stubGpuName = "Stub AMD GPU";
+            stubHardware.SetupGet(h => h.HardwareType).Returns(gpuType);
+            string stubGpuName = "Stub GPU";
             stubHardware.SetupGet(n => n.Name).Returns(stubGpuName);
 
             var stubComputer = new Mock<IComputer>();
