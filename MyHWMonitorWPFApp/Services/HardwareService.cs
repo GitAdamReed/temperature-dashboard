@@ -29,7 +29,7 @@ namespace MyHWMonitorWPFApp.Services
             var sensorList = new List<SensorItem>();
             float? packageTemp = null;
 
-            IHardware? cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu) ?? throw new Exception("Cannot detect CPU.");
+            IHardware cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu) ?? throw new Exception("Cannot detect CPU.");
             
             cpu.Update();
 
@@ -60,7 +60,7 @@ namespace MyHWMonitorWPFApp.Services
             var sensorList = new List<SensorItem>();
             float? coreTemp = null;
 
-            IHardware? gpu = _computer.Hardware.FirstOrDefault(h => _gpuTypes.Any(t => t == h.HardwareType)) ?? throw new Exception("Cannot detect GPU.");
+            IHardware gpu = _computer.Hardware.FirstOrDefault(h => _gpuTypes.Any(t => t == h.HardwareType)) ?? throw new Exception("Cannot detect GPU.");
             
             gpu.Update();
 
