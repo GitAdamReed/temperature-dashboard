@@ -76,7 +76,16 @@ namespace MyHWMonitorWPFApp
 
             DataContext = this;
 
-            TimeFormatter = value => $"{value:F0}s";
+            TimeFormatter = value =>
+            {
+                StringBuilder sb = new("");
+                if (Math.Floor(value / 3600) > 0) sb.Append($"{Math.Floor(value / 3600)}h"); // Convert to hours
+                if (Math.Floor(value / 60) > 0) sb.Append($"{Math.Floor(value / 60)}m"); // Convert to minutes
+                if (Math.Floor(value % 60) != 0) sb.Append($"{value % 60:F0}s"); // Convert to seconds
+
+                string formatedString = sb.ToString();
+                return formatedString == string.Empty ? $"{value:F0}s" : formatedString;
+            };
 
             var computer = new Computer
             {
