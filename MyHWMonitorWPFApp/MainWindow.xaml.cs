@@ -83,8 +83,8 @@ namespace MyHWMonitorWPFApp
                 if (Math.Floor(value / 60) > 0) sb.Append($"{Math.Floor(value / 60)}m"); // Convert to minutes
                 if (Math.Floor(value % 60) != 0) sb.Append($"{value % 60:F0}s"); // Convert to seconds
 
-                string formatedString = sb.ToString();
-                return formatedString == string.Empty ? $"{value:F0}s" : formatedString;
+                string formattedString = sb.ToString();
+                return formattedString == string.Empty ? $"{value:F0}s" : formattedString;
             };
 
             var computer = new Computer
