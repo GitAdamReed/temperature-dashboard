@@ -4,6 +4,7 @@ using LiveCharts.Defaults;
 using LiveCharts.Wpf;
 using MyHWMonitorWPFApp.Models;
 using MyHWMonitorWPFApp.Services;
+using MyHWMonitorWPFApp.Utilities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -45,7 +46,7 @@ namespace MyHWMonitorWPFApp
         public double GpuXAxisMin => _gpuPoints.Any() ? _gpuPoints.Min(p => p.X) : 0;
         public double GpuXAxisMax => _gpuPoints.Any() ? _gpuPoints.Max(p => p.X) : 60;
 
-        public Func<double, string> TimeFormatter { get; set; }
+        public Func<double, string> TimeElapsed { get; set; }
 
         public MainWindow()
         {
@@ -76,19 +77,7 @@ namespace MyHWMonitorWPFApp
 
             DataContext = this;
 
-            TimeFormatter = value =>
-            {
-                StringBuilder sb = new(string.Empty);
-                // Convert to hours
-                if (Math.Floor(value / 3600) > 0) sb.Append($"{Math.Floor(value / 3600)}h");
-                // Convert to minutes
-                if (Math.Floor(value / 60) > 0) sb.Append($"{Math.Floor(value / 60)}m");
-                // Convert to seconds but omit if multiple of 60
-                if (Math.Floor(value % 60) != 0) sb.Append($"{value % 60:F0}s");
-
-                string formattedString = sb.ToString();
-                return formattedString == string.Empty ? $"{value:F0}s" : formattedString;
-            };
+            TimeElapsed = TimeFormatter.FormatTotalSeconds;
 
             var computer = new Computer
             {
