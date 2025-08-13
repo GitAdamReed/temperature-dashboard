@@ -6,9 +6,8 @@ using System.Management;
 
 namespace MyHWMonitorWPFAppUnitTests
 {
-    public class Tests
+    public class HardwareServiceUnitTests
     {
-        //private HardwareService _hwService;
         
         [SetUp]
         public void Setup()
