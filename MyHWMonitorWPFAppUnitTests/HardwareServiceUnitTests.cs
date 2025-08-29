@@ -113,7 +113,7 @@ namespace MyHWMonitorWPFAppUnitTests
                 Min = $"{stubSensorMin:F1}",
                 Max = $"{stubSensorMax:F1}"
             };
-            var (sensorItems, currentTemp) = hwService.GetCpuSensorData();
+            var (sensorItems, currentTemp) = hwService.GetCpuTempSensorData();
 
             Assert.Multiple(() =>
             {
@@ -136,7 +136,7 @@ namespace MyHWMonitorWPFAppUnitTests
 
             var hwService = new HardwareService(stubComputer.Object);
 
-            Assert.That(hwService.GetCpuSensorData, Throws.Exception.Message.Contains("Cannot detect CPU."));
+            Assert.That(hwService.GetCpuTempSensorData, Throws.Exception.Message.Contains("Cannot detect CPU."));
         }
 
         [Test]

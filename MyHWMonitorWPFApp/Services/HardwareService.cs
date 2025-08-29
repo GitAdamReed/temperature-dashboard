@@ -24,7 +24,7 @@ namespace MyHWMonitorWPFApp.Services
             GpuName = GetGpuName();
         }
 
-        public (List<SensorItem> sensorItems, float? currentTemp) GetCpuSensorData()
+        public (List<SensorItem> sensorItems, float? currentTemp) GetCpuTempSensorData()
         {
             var sensorList = new List<SensorItem>();
             float? packageTemp = null;
@@ -40,7 +40,7 @@ namespace MyHWMonitorWPFApp.Services
                     sensorList.Add(new SensorItem
                     {
                         Name = sensor.Name,
-                        Value = $"{sensor.Value.Value:F1}",
+                        Value = $"{sensor.Value.Value:F1}", // °C
                         Min = $"{sensor.Min:F1}",
                         Max = $"{sensor.Max:F1}"
                     });
@@ -53,6 +53,56 @@ namespace MyHWMonitorWPFApp.Services
             }
 
             return (sensorList, packageTemp);
+        }
+
+        public (List<SensorItem> sensorItems, float? averageFanSpeed) GetCpuFanSpeed()
+        {
+            var sensorList = new List<SensorItem>();
+            var fanSpeedList = new List<float>();
+
+            IHardware mobo = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard) ?? throw new Exception("Cannot detect Motherboard.");
+
+            mobo.Update();
+
+            foreach (var sensor in mobo.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
+                {
+                    sensorList.Add(new SensorItem
+                    {
+                        Name = sensor.Name,
+                        Value = $"{sensor.Value.Value:F1}",
+                        Min = $"{sensor.Min:F1}",
+                        Max = $"{sensor.Max:F1}"
+                    });
+                    fanSpeedList.Add(sensor.Value.Value);
+                }
+            }
+
+            foreach (var subHW in mobo.SubHardware)
+            {
+                subHW.Update();
+
+                foreach (var sensor in subHW.Sensors)
+                {
+                    if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
+                    {
+                        sensorList.Add(new SensorItem
+                        {
+                            Name = sensor.Name,
+                            Value = $"{sensor.Value.Value:F1}",
+                            Min = $"{sensor.Min:F1}",
+                            Max = $"{sensor.Max:F1}"
+                        });
+                        fanSpeedList.Add(sensor.Value.Value);
+                    }
+                }
+            }
+
+            // Calculate average fan speed
+            float? averageSpeed = fanSpeedList.Count > 0 ? float.Round(fanSpeedList.Average(), 1) : null;
+
+            return (sensorList, averageSpeed);
         }
 
         public (List<SensorItem> sensorItems, float? currentTemp) GetGpuSensorData()

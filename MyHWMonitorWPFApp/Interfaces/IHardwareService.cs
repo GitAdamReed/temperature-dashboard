@@ -9,7 +9,7 @@ namespace MyHWMonitorWPFApp.Interfaces
 {
     public interface IHardwareService
     {
-        (List<SensorItem> sensorItems, float? currentTemp) GetCpuSensorData();
+        (List<SensorItem> sensorItems, float? currentTemp) GetCpuTempSensorData();
         (List<SensorItem> sensorItems, float? currentTemp) GetGpuSensorData();
     }
 }
