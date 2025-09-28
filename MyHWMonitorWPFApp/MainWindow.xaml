@@ -50,8 +50,8 @@
             </ListView>
         </GroupBox>
         <!-- Charts -->
-        <GroupBox Header="CPU Package Temp (°C)" Grid.Column="1" Grid.Row="0">
-            <lvc:CartesianChart Series="{Binding CpuChartSeries}" Height="200" Margin="0,0,0,20">
+        <GroupBox Header="Temperature" Grid.Column="1" Grid.Row="0">
+            <lvc:CartesianChart Series="{Binding TempChartSeries}" Height="200" Margin="0,0,0,20">
                 <lvc:CartesianChart.AxisX>
                     <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
                         <lvc:Axis.MinValue>
@@ -65,23 +65,25 @@
                 <lvc:CartesianChart.AxisY>
                     <lvc:Axis Title="Temperature (°C)" MinValue="0" MaxValue="100"/>
                 </lvc:CartesianChart.AxisY>
+                <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
             </lvc:CartesianChart>
         </GroupBox>
-        <GroupBox Header="GPU Core Temp (°C)" Grid.Column="1" Grid.Row="1">
-            <lvc:CartesianChart Series="{Binding GpuChartSeries}" Height="200" Margin="0,0,0,20">
+        <GroupBox Header="Fan Speed" Grid.Column="1" Grid.Row="1">
+            <lvc:CartesianChart Series="{Binding FanChartSeries}" Height="200" Margin="0,0,0,0">
                 <lvc:CartesianChart.AxisX>
                     <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
                         <lvc:Axis.MinValue>
-                            <Binding Path="GpuXAxisMin" />
+                            <Binding Path="FanXAxisMin" />
                         </lvc:Axis.MinValue>
                         <lvc:Axis.MaxValue>
-                            <Binding Path="GpuXAxisMax" />
+                            <Binding Path="FanXAxisMax" />
                         </lvc:Axis.MaxValue>
                     </lvc:Axis>
                 </lvc:CartesianChart.AxisX>
                 <lvc:CartesianChart.AxisY>
-                    <lvc:Axis Title="Temperature (°C)" MinValue="0" MaxValue="100"/>
+                    <lvc:Axis Title="Fan Speed (RPM)" MinValue="0" MaxValue="2000" />
                 </lvc:CartesianChart.AxisY>
+                <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
             </lvc:CartesianChart>
         </GroupBox>
     </Grid>

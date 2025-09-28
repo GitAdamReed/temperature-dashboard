@@ -40,14 +40,12 @@ namespace MyHWMonitorWPFApp
         public ObservableCollection<SensorItem> CpuSensors { get; set; } = [];
         public ObservableCollection<SensorItem> GpuSensors { get; set; } = [];
         public ObservableCollection<SensorItem> MoboSensors { get; set; } = [];
-        public SeriesCollection CpuChartSeries { get; set; }
+        public SeriesCollection TempChartSeries { get; set; }
         public SeriesCollection GpuChartSeries { get; set; }
         public SeriesCollection FanChartSeries { get; set; }
 
-        public double CpuXAxisMin => _cpuTempPoints.Any() ? _cpuTempPoints.Min(p => p.X) : 0;
-        public double CpuXAxisMax => _cpuTempPoints.Any() ? _cpuTempPoints.Max(p => p.X) : 60;
-        public double GpuXAxisMin => _gpuTempPoints.Any() ? _gpuTempPoints.Min(p => p.X) : 0;
-        public double GpuXAxisMax => _gpuTempPoints.Any() ? _gpuTempPoints.Max(p => p.X) : 60;
+        public double TempXAxisMin => _cpuTempPoints.Any() ? _cpuTempPoints.Min(p => p.X) : 0;
+        public double TempXAxisMax => _cpuTempPoints.Any() ? _cpuTempPoints.Max(p => p.X) : 60;
         public double FanXAxisMin => _moboFanPoints.Any() ? _moboFanPoints.Min(p => p.X) : 0;
         public double FanXAxisMax => _moboFanPoints.Any() ? _moboFanPoints.Max(p => p.X) : 60;
 
@@ -59,7 +57,7 @@ namespace MyHWMonitorWPFApp
             CpuSensorListView.ItemsSource = CpuSensors;
             GpuSensorListView.ItemsSource = GpuSensors;
             MoboSensorListView.ItemsSource = MoboSensors;
-            CpuChartSeries = new SeriesCollection
+            TempChartSeries = new SeriesCollection
             {
                 new LineSeries
                 {
@@ -67,25 +65,24 @@ namespace MyHWMonitorWPFApp
                     Values = _cpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
-                }
-            };
-
-            GpuChartSeries = new SeriesCollection
-            {
+                    Fill = Brushes.Transparent
+                },
                 new LineSeries
                 {
                     Title = "GPU Temp",
                     Values = _gpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
+                    Fill = Brushes.Transparent
                 }
             };
-            FanChartSeries = new SeriesCollection // This should have its own chart
+
+            FanChartSeries = new SeriesCollection
             {
                 // Should have multiple line series for each mobo fan and average GPU fan speed
                 new LineSeries
                 {
-                    Title = "Motherboard Fan Speed",
+                    Title = "Avg. Motherboard Fan Speed",
                     Values = _moboFanPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
@@ -168,10 +165,10 @@ namespace MyHWMonitorWPFApp
                     while (_gpuTempPoints.Any() && _gpuTempPoints[0].X < elapsedSeconds - maxSeconds)
                         _gpuTempPoints.RemoveAt(0);
 
-                    OnPropertyChanged(nameof(CpuXAxisMin));
-                    OnPropertyChanged(nameof(CpuXAxisMax));
-                    OnPropertyChanged(nameof(GpuXAxisMin));
-                    OnPropertyChanged(nameof(GpuXAxisMax));
+                    OnPropertyChanged(nameof(TempXAxisMin));
+                    OnPropertyChanged(nameof(TempXAxisMax));
+                    OnPropertyChanged(nameof(FanXAxisMin));
+                    OnPropertyChanged(nameof(FanXAxisMax));
                 });
             });
         }
