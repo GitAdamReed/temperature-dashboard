@@ -82,7 +82,7 @@ namespace MyHWMonitorWPFApp
                 // Should have multiple line series for each mobo fan and average GPU fan speed
                 new LineSeries
                 {
-                    Title = "Avg. Motherboard Fan Speed",
+                    Title = "CPU Fan Speed",
                     Values = _moboFanPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
@@ -121,7 +121,7 @@ namespace MyHWMonitorWPFApp
             // Background thread
             Task.Run(() => 
             {
-                var (moboSensorItems, averageCpuFanSpeed) = _hwService.GetCpuFanSpeed();
+                var (moboSensorItems, currentCpuFanSpeed) = _hwService.GetCpuFanSpeed();
                 var (cpuSensorItems, currentCpuPackageTemp) = _hwService.GetCpuTempSensorData();
                 var (gpuSensorItems, currentGpuCoreTemp) = _hwService.GetGpuSensorData();
 
@@ -144,9 +144,9 @@ namespace MyHWMonitorWPFApp
                     var now = DateTime.Now;
                     double elapsedSeconds = (now - _startTime).TotalSeconds;
 
-                    if (averageCpuFanSpeed.HasValue)
+                    if (currentCpuFanSpeed.HasValue)
                     {
-                        _moboFanPoints.Add(new ObservablePoint(elapsedSeconds, averageCpuFanSpeed.Value));
+                        _moboFanPoints.Add(new ObservablePoint(elapsedSeconds, (double)currentCpuFanSpeed.Value));
                     }
                     while (_moboFanPoints.Any() && _moboFanPoints[0].X < elapsedSeconds - maxSeconds)
                         _moboFanPoints.RemoveAt(0);

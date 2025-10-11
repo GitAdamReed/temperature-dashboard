@@ -55,10 +55,10 @@ namespace MyHWMonitorWPFApp.Services
             return (sensorList, packageTemp);
         }
 
-        public (List<SensorItem> sensorItems, float? averageFanSpeed) GetCpuFanSpeed()
+        public (List<SensorItem> sensorItems, decimal? cpuFanSpeed) GetCpuFanSpeed()
         {
             var sensorList = new List<SensorItem>();
-            var fanSpeedList = new List<float>();
+            var fanSpeedDict = new Dictionary<string, decimal>(); // Use decimal for fan speed as it is more accurate when rounding
 
             IHardware mobo = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard) ?? throw new Exception("Cannot detect Motherboard.");
 
@@ -75,7 +75,7 @@ namespace MyHWMonitorWPFApp.Services
                         Min = $"{sensor.Min:F1}",
                         Max = $"{sensor.Max:F1}"
                     });
-                    fanSpeedList.Add(sensor.Value.Value);
+                    fanSpeedDict.Add(sensor.Name, Math.Round((decimal)sensor.Value.Value, 1));
                 }
             }
 
@@ -94,15 +94,19 @@ namespace MyHWMonitorWPFApp.Services
                             Min = $"{sensor.Min:F1}",
                             Max = $"{sensor.Max:F1}"
                         });
-                        fanSpeedList.Add(sensor.Value.Value);
+                        fanSpeedDict.Add(sensor.Name, Math.Round((decimal)sensor.Value.Value, 1));
                     }
                 }
             }
 
             // Calculate average fan speed
-            float? averageSpeed = fanSpeedList.Count > 0 ? float.Round(fanSpeedList.Average(), 1) : null;
+            //float? averageSpeed = fanSpeedList.Count > 0 ? float.Round(fanSpeedList.Average(), 1) : null;
 
-            return (sensorList, averageSpeed);
+            // Get CPU fan speed
+            // Identify CPU fan or fall back to first available motherboard fan
+            decimal? cpuFanSpeed = fanSpeedDict[fanSpeedDict.Keys.FirstOrDefault(k => k.Contains("CPU"), fanSpeedDict.Keys.First())];
+
+            return (sensorList, cpuFanSpeed);
         }
 
         public (List<SensorItem> sensorItems, float? currentTemp) GetGpuSensorData()
