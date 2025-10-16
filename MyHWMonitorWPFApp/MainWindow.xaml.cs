@@ -5,6 +5,7 @@ using LiveCharts.Wpf;
 using MyHWMonitorWPFApp.Models;
 using MyHWMonitorWPFApp.Services;
 using MyHWMonitorWPFApp.Utilities;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -32,7 +33,7 @@ namespace MyHWMonitorWPFApp
         private readonly DateTime _startTime = DateTime.Now;
         private readonly ChartValues<ObservablePoint> _cpuTempPoints = [];
         private readonly ChartValues<ObservablePoint> _gpuTempPoints = [];
-        private readonly ChartValues<ObservablePoint> _moboFanPoints = []; // Should this be a list of chart values for each fan line series?
+        private readonly Dictionary<string, ChartValues<ObservablePoint>> _moboFanPoints = []; // Should this be a dictionary of chart values for each fan line series?
 
         public string CpuName { get; init; }
         public string GpuName { get; init; }
@@ -46,8 +47,8 @@ namespace MyHWMonitorWPFApp
 
         public double TempXAxisMin => _cpuTempPoints.Any() ? _cpuTempPoints.Min(p => p.X) : 0;
         public double TempXAxisMax => _cpuTempPoints.Any() ? _cpuTempPoints.Max(p => p.X) : 60;
-        public double FanXAxisMin => _moboFanPoints.Any() ? _moboFanPoints.Min(p => p.X) : 0;
-        public double FanXAxisMax => _moboFanPoints.Any() ? _moboFanPoints.Max(p => p.X) : 60;
+        public double FanXAxisMin => _moboFanPoints.Count > 0 ? _moboFanPoints.First().Value.Min(p => p.X) : 0;
+        public double FanXAxisMax => _moboFanPoints.Count > 0 ? _moboFanPoints.First().Value.Max(p => p.X) : 60;
 
         public Func<double, string> TimeElapsed { get; set; }
 
@@ -77,18 +78,8 @@ namespace MyHWMonitorWPFApp
                 }
             };
 
-            FanChartSeries = new SeriesCollection
-            {
-                // Should have multiple line series for each mobo fan and average GPU fan speed
-                new LineSeries
-                {
-                    Title = "CPU Fan Speed",
-                    Values = _moboFanPoints,
-                    PointGeometry = null, // optional for smoother line
-                    LineSmoothness = 0,
-                    Fill = Brushes.Transparent
-                }
-            };
+            // Should have multiple line series for each mobo fan and average GPU fan speed
+            FanChartSeries = new SeriesCollection();
 
             DataContext = this;
 
@@ -121,9 +112,9 @@ namespace MyHWMonitorWPFApp
             // Background thread
             Task.Run(() => 
             {
-                var (moboSensorItems, currentCpuFanSpeed) = _hwService.GetCpuFanSpeed();
                 var (cpuSensorItems, currentCpuPackageTemp) = _hwService.GetCpuTempSensorData();
                 var (gpuSensorItems, currentGpuCoreTemp) = _hwService.GetGpuSensorData();
+                var (moboSensorItems, fanSpeedDict, currentCpuFanSpeed) = _hwService.GetMoboFanSpeed();
 
                 // UI thread
                 // Dispatch sensor updates to UI
@@ -144,12 +135,30 @@ namespace MyHWMonitorWPFApp
                     var now = DateTime.Now;
                     double elapsedSeconds = (now - _startTime).TotalSeconds;
 
-                    if (currentCpuFanSpeed.HasValue)
+                    foreach (var kvp in fanSpeedDict)
                     {
-                        _moboFanPoints.Add(new ObservablePoint(elapsedSeconds, (double)currentCpuFanSpeed.Value));
+                        if (_moboFanPoints.Any(x => x.Key == kvp.Key))
+                        {
+                            _moboFanPoints[kvp.Key].Add(new ObservablePoint(elapsedSeconds, (double)kvp.Value));
+                        }
+                        else
+                        {
+                            var point = new ObservablePoint(elapsedSeconds, (double)kvp.Value);
+                            _moboFanPoints.Add(kvp.Key, new ChartValues<ObservablePoint>() { point });
+                            
+                            var series = new LineSeries
+                            {
+                                Title = kvp.Key,
+                                Values = _moboFanPoints[kvp.Key],
+                                PointGeometry = null, // optional for smoother line
+                                LineSmoothness = 0,
+                                Fill = Brushes.Transparent
+                            };
+                            FanChartSeries.Add(series);
+                        }
+                        while (_moboFanPoints[kvp.Key].Any() && _moboFanPoints[kvp.Key].First().X < elapsedSeconds - maxSeconds)
+                            _moboFanPoints[kvp.Key].RemoveAt(0);
                     }
-                    while (_moboFanPoints.Any() && _moboFanPoints[0].X < elapsedSeconds - maxSeconds)
-                        _moboFanPoints.RemoveAt(0);
 
                     if (currentCpuPackageTemp.HasValue)
                     {

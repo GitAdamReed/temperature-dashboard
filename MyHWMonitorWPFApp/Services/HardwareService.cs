@@ -55,7 +55,7 @@ namespace MyHWMonitorWPFApp.Services
             return (sensorList, packageTemp);
         }
 
-        public (List<SensorItem> sensorItems, decimal? cpuFanSpeed) GetCpuFanSpeed()
+        public (List<SensorItem> sensorItems, Dictionary<string, decimal> fanSpeed, decimal? cpuFanSpeed) GetMoboFanSpeed()
         {
             var sensorList = new List<SensorItem>();
             var fanSpeedDict = new Dictionary<string, decimal>(); // Use decimal for fan speed as it is more accurate when rounding
@@ -106,7 +106,7 @@ namespace MyHWMonitorWPFApp.Services
             // Identify CPU fan or fall back to first available motherboard fan
             decimal? cpuFanSpeed = fanSpeedDict[fanSpeedDict.Keys.FirstOrDefault(k => k.Contains("CPU"), fanSpeedDict.Keys.First())];
 
-            return (sensorList, cpuFanSpeed);
+            return (sensorList, fanSpeedDict, cpuFanSpeed);
         }
 
         public (List<SensorItem> sensorItems, float? currentTemp) GetGpuSensorData()
