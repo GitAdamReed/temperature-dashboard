@@ -68,14 +68,15 @@ namespace MyHWMonitorWPFApp.Services
             {
                 if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
                 {
+                    string fanName = sensor.Name.Equals("FAN #1", StringComparison.CurrentCultureIgnoreCase) ? "CPU" : sensor.Name;
                     sensorList.Add(new SensorItem
                     {
-                        Name = sensor.Name,
+                        Name = fanName,
                         Value = $"{sensor.Value.Value:F1}",
                         Min = $"{sensor.Min:F1}",
                         Max = $"{sensor.Max:F1}"
                     });
-                    fanSpeedDict.Add(sensor.Name, Math.Round((decimal)sensor.Value.Value, 1));
+                    fanSpeedDict.Add(fanName, Math.Round((decimal)sensor.Value.Value, 1));
                 }
             }
 
@@ -87,14 +88,15 @@ namespace MyHWMonitorWPFApp.Services
                 {
                     if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
                     {
+                        string fanName = sensor.Name.Equals("FAN #1", StringComparison.CurrentCultureIgnoreCase) ? "CPU" : sensor.Name;
                         sensorList.Add(new SensorItem
                         {
-                            Name = sensor.Name,
+                            Name = fanName,
                             Value = $"{sensor.Value.Value:F1}",
                             Min = $"{sensor.Min:F1}",
                             Max = $"{sensor.Max:F1}"
                         });
-                        fanSpeedDict.Add(sensor.Name, Math.Round((decimal)sensor.Value.Value, 1));
+                        fanSpeedDict.Add(fanName, Math.Round((decimal)sensor.Value.Value, 1));
                     }
                 }
             }
