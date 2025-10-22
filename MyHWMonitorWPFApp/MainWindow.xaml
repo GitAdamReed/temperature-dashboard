@@ -67,10 +67,10 @@
                 <lvc:CartesianChart.AxisX>
                     <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
                         <lvc:Axis.MinValue>
-                            <Binding Path="CpuXAxisMin" />
+                            <Binding Path="TempXAxisMin" />
                         </lvc:Axis.MinValue>
                         <lvc:Axis.MaxValue>
-                            <Binding Path="CpuXAxisMax" />
+                            <Binding Path="TempXAxisMax" />
                         </lvc:Axis.MaxValue>
                     </lvc:Axis>
                 </lvc:CartesianChart.AxisX>
