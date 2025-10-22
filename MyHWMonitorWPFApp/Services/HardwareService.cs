@@ -142,6 +142,60 @@ namespace MyHWMonitorWPFApp.Services
             return (sensorList, coreTemp);
         }
 
+        public (List<SensorItem> sensorItems, decimal? averageFanSpeed) GetGpuFanSpeed()
+        {
+            var sensorList = new List<SensorItem>();
+            var fanSpeedList = new List<decimal>();
+            decimal? averageGpuFanSpeed = null; // Use decimal for fan speed as it is more accurate when rounding
+
+            IHardware gpu = _computer.Hardware.FirstOrDefault(h => _gpuTypes.Any(t => t == h.HardwareType)) ?? throw new Exception("Cannot detect GPU.");
+
+            gpu.Update();
+
+            foreach (var sensor in gpu.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue)
+                {
+                    sensorList.Add(new SensorItem
+                    {
+                        Name = sensor.Name,
+                        Value = $"{sensor.Value.Value:F1}",
+                        Min = $"{sensor.Min:F1}",
+                        Max = $"{sensor.Max:F1}"
+                    });
+                    fanSpeedList.Add((decimal)sensor.Value.Value);
+                }
+            }
+
+            foreach (var subHW in gpu.SubHardware)
+            {
+                subHW.Update();
+
+                foreach (var sensor in subHW.Sensors)
+                {
+                    if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue)
+                    {
+                        sensorList.Add(new SensorItem
+                        {
+                            Name = sensor.Name,
+                            Value = $"{sensor.Value.Value:F1}",
+                            Min = $"{sensor.Min:F1}",
+                            Max = $"{sensor.Max:F1}"
+                        });
+                        fanSpeedList.Add((decimal)sensor.Value.Value);
+                    }
+                }
+            }
+
+            // Calculate average speed if fanSpeedList has any elements to avoid InvalidOperationException
+            if (fanSpeedList.Count > 0)
+            {
+                averageGpuFanSpeed = Math.Round(fanSpeedList.Average(), 1);
+            }
+
+            return (sensorList, averageGpuFanSpeed);
+        }
+
         private string GetCpuName()
         {
             var cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);

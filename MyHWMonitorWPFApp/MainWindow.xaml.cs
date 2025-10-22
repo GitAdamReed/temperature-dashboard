@@ -33,6 +33,7 @@ namespace MyHWMonitorWPFApp
         private readonly DateTime _startTime = DateTime.Now;
         private readonly ChartValues<ObservablePoint> _cpuTempPoints = [];
         private readonly ChartValues<ObservablePoint> _gpuTempPoints = [];
+        private readonly ChartValues<ObservablePoint> _gpuFanPoints = [];
         private readonly Dictionary<string, ChartValues<ObservablePoint>> _moboFanPoints = []; // Should this be a dictionary of chart values for each fan line series?
 
         public string CpuName { get; init; }
@@ -40,6 +41,7 @@ namespace MyHWMonitorWPFApp
         
         public ObservableCollection<SensorItem> CpuSensors { get; set; } = [];
         public ObservableCollection<SensorItem> GpuSensors { get; set; } = [];
+        public ObservableCollection<SensorItem> GpuFanSensors { get; set; } = [];
         public ObservableCollection<SensorItem> MoboSensors { get; set; } = [];
         public SeriesCollection TempChartSeries { get; set; }
         public SeriesCollection GpuChartSeries { get; set; }
@@ -57,6 +59,7 @@ namespace MyHWMonitorWPFApp
             InitializeComponent();
             CpuSensorListView.ItemsSource = CpuSensors;
             GpuSensorListView.ItemsSource = GpuSensors;
+            GpuFanSensorListView.ItemsSource = GpuFanSensors;
             MoboSensorListView.ItemsSource = MoboSensors;
             TempChartSeries = new SeriesCollection
             {
@@ -79,8 +82,17 @@ namespace MyHWMonitorWPFApp
             };
 
             // Should have multiple line series for each mobo fan and average GPU fan speed
-            FanChartSeries = new SeriesCollection();
-
+            FanChartSeries = new SeriesCollection
+            {
+                new LineSeries()
+                {
+                    Title = "GPU (Average)",
+                    Values = _gpuFanPoints,
+                    PointGeometry = null, // optional for smoother line
+                    LineSmoothness = 0,
+                    Fill = Brushes.Transparent
+                }
+            };
             DataContext = this;
 
             TimeElapsed = TimeFormatter.FormatTotalSeconds;
@@ -114,6 +126,7 @@ namespace MyHWMonitorWPFApp
             {
                 var (cpuSensorItems, currentCpuPackageTemp) = _hwService.GetCpuTempSensorData();
                 var (gpuSensorItems, currentGpuCoreTemp) = _hwService.GetGpuSensorData();
+                var (gpuFanSensorItems, averageGpuFanSpeed) = _hwService.GetGpuFanSpeed();
                 var (moboSensorItems, fanSpeedDict, currentCpuFanSpeed) = _hwService.GetMoboFanSpeed();
 
                 // UI thread
@@ -131,6 +144,10 @@ namespace MyHWMonitorWPFApp
                     GpuSensors.Clear();
                     foreach (var item in gpuSensorItems)
                         GpuSensors.Add(item);
+
+                    GpuFanSensors.Clear();
+                    foreach (var item in gpuFanSensorItems)
+                        GpuFanSensors.Add(item);
 
                     var now = DateTime.Now;
                     double elapsedSeconds = (now - _startTime).TotalSeconds;
@@ -173,6 +190,13 @@ namespace MyHWMonitorWPFApp
                     }
                     while (_gpuTempPoints.Any() && _gpuTempPoints[0].X < elapsedSeconds - maxSeconds)
                         _gpuTempPoints.RemoveAt(0);
+
+                    if (averageGpuFanSpeed.HasValue)
+                    {
+                        _gpuFanPoints.Add(new ObservablePoint(elapsedSeconds, (double)averageGpuFanSpeed));
+                    }
+                    while (_gpuFanPoints.Any() && _gpuFanPoints[0].X < elapsedSeconds - maxSeconds)
+                        _gpuFanPoints.RemoveAt(0);
 
                     OnPropertyChanged(nameof(TempXAxisMin));
                     OnPropertyChanged(nameof(TempXAxisMax));

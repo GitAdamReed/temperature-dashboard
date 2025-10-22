@@ -38,16 +38,28 @@
             </StackPanel>
         </GroupBox>
         <GroupBox Header="{Binding GpuName}" Grid.Column="0" Grid.Row="1">
-            <ListView Name="GpuSensorListView">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                        <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
-                        <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
-                        <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+            <StackPanel>
+                <ListView Name="GpuSensorListView">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                            <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                            <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                            <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <ListView Name="GpuFanSensorListView">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Fan" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                            <GridViewColumn Header="Value (RPM)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                            <GridViewColumn Header="Min (RPM)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                            <GridViewColumn Header="Max (RPM)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </StackPanel>
         </GroupBox>
         <!-- Charts -->
         <GroupBox Header="Temperature" Grid.Column="1" Grid.Row="0">
