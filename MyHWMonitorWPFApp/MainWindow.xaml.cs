@@ -69,7 +69,7 @@ namespace MyHWMonitorWPFApp
             {
                 new LineSeries
                 {
-                    Title = "CPU Temp",
+                    Title = "CPU Package",
                     Values = _cpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
@@ -78,7 +78,7 @@ namespace MyHWMonitorWPFApp
                 },
                 new LineSeries
                 {
-                    Title = "GPU Temp",
+                    Title = "GPU Core",
                     Values = _gpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
