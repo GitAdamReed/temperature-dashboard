@@ -28,13 +28,17 @@ namespace MyHWMonitorWPFApp
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        private static readonly SolidColorBrush _cpuBrushColor = Brushes.Blue;
+        private static readonly SolidColorBrush _gpuBrushColor = Brushes.Red;
+
         private readonly HardwareService _hwService;
         private readonly DispatcherTimer _timer;
         private readonly DateTime _startTime = DateTime.Now;
         private readonly ChartValues<ObservablePoint> _cpuTempPoints = [];
         private readonly ChartValues<ObservablePoint> _gpuTempPoints = [];
         private readonly ChartValues<ObservablePoint> _gpuFanPoints = [];
-        private readonly Dictionary<string, ChartValues<ObservablePoint>> _moboFanPoints = []; // Should this be a dictionary of chart values for each fan line series?
+        private readonly Dictionary<string, ChartValues<ObservablePoint>> _moboFanPoints = []; // Dictionary of chart values for each fan line series
+        private readonly List<SolidColorBrush> _currentBrushes = [_cpuBrushColor, _gpuBrushColor];
 
         public string CpuName { get; init; }
         public string GpuName { get; init; }
@@ -69,7 +73,8 @@ namespace MyHWMonitorWPFApp
                     Values = _cpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
-                    Fill = Brushes.Transparent
+                    Fill = Brushes.Transparent,
+                    Stroke = _cpuBrushColor
                 },
                 new LineSeries
                 {
@@ -77,7 +82,8 @@ namespace MyHWMonitorWPFApp
                     Values = _gpuTempPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
-                    Fill = Brushes.Transparent
+                    Fill = Brushes.Transparent,
+                    Stroke = _gpuBrushColor
                 }
             };
 
@@ -90,7 +96,8 @@ namespace MyHWMonitorWPFApp
                     Values = _gpuFanPoints,
                     PointGeometry = null, // optional for smoother line
                     LineSmoothness = 0,
-                    Fill = Brushes.Transparent
+                    Fill = Brushes.Transparent,
+                    Stroke = _gpuBrushColor
                 }
             };
             DataContext = this;
@@ -162,14 +169,16 @@ namespace MyHWMonitorWPFApp
                         {
                             var point = new ObservablePoint(elapsedSeconds, (double)kvp.Value);
                             _moboFanPoints.Add(kvp.Key, new ChartValues<ObservablePoint>() { point });
-                            
+
+                            SolidColorBrush stroke = kvp.Key == "CPU" ? _cpuBrushColor : CustomBrush.RandomBrushUnique(_currentBrushes);
                             var series = new LineSeries
                             {
                                 Title = kvp.Key,
                                 Values = _moboFanPoints[kvp.Key],
                                 PointGeometry = null, // optional for smoother line
                                 LineSmoothness = 0,
-                                Fill = Brushes.Transparent
+                                Fill = Brushes.Transparent,
+                                Stroke = stroke
                             };
                             FanChartSeries.Add(series);
                         }
