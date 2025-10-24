@@ -11,9 +11,11 @@ namespace MyHWMonitorWPFApp.Services
 {
     public class HardwareService : IHardwareService
     {
+        private const StringComparison StringComparisonSetting = StringComparison.OrdinalIgnoreCase;
+
+        private static readonly HardwareType[] _gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
+
         private readonly IComputer _computer;
-        private readonly HardwareType[] _gpuTypes = [HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel];
-        private readonly StringComparison _stringComparisonSetting = StringComparison.OrdinalIgnoreCase;
 
         public string CpuName { get; init; }
         public string GpuName { get; init; }
@@ -46,7 +48,7 @@ namespace MyHWMonitorWPFApp.Services
                         Max = $"{sensor.Max:F1}"
                     });
 
-                    if (sensor.Name.Contains("CPU Package", _stringComparisonSetting))
+                    if (sensor.Name.Contains("CPU Package", StringComparisonSetting))
                     {
                         packageTemp ??= sensor.Value.Value;
                     }
@@ -69,7 +71,7 @@ namespace MyHWMonitorWPFApp.Services
             {
                 if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
                 {
-                    string fanName = sensor.Name.Equals("Fan #1", _stringComparisonSetting) ? "CPU" : sensor.Name;
+                    string fanName = sensor.Name.Equals("Fan #1", StringComparisonSetting) ? "CPU" : sensor.Name;
                     sensorList.Add(new SensorItem
                     {
                         Name = fanName,
@@ -89,7 +91,7 @@ namespace MyHWMonitorWPFApp.Services
                 {
                     if (sensor.SensorType == SensorType.Fan && sensor.Value.HasValue && sensor.Value.Value > 0)
                     {
-                        string fanName = sensor.Name.Equals("Fan #1", _stringComparisonSetting) ? "CPU" : sensor.Name;
+                        string fanName = sensor.Name.Equals("Fan #1", StringComparisonSetting) ? "CPU" : sensor.Name;
                         sensorList.Add(new SensorItem
                         {
                             Name = fanName,
@@ -126,7 +128,7 @@ namespace MyHWMonitorWPFApp.Services
                 if (sensor.SensorType == SensorType.Temperature && sensor.Value.HasValue)
                 {
                     // Temporary code to handle missing sensor data for Nvidia 50 series GPUs
-                    if (gpu.Name.StartsWith("NVIDIA GeForce RTX 50", _stringComparisonSetting) && !sensor.Name.Contains("Core", _stringComparisonSetting))
+                    if (gpu.Name.StartsWith("NVIDIA GeForce RTX 50", StringComparisonSetting) && !sensor.Name.Contains("Core", StringComparisonSetting))
                         continue;
 
                     sensorList.Add(new SensorItem
