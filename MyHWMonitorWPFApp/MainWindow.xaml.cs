@@ -40,6 +40,8 @@ namespace MyHWMonitorWPFApp
         private readonly Dictionary<string, ChartValues<ObservablePoint>> _moboFanPoints = []; // Dictionary of chart values for each fan line series
         private readonly List<SolidColorBrush> _currentBrushes = [_cpuBrushColor, _gpuBrushColor];
 
+        private bool _isLoading = true;
+
         public string CpuName { get; init; }
         public string GpuName { get; init; }
         
@@ -52,9 +54,17 @@ namespace MyHWMonitorWPFApp
         public SeriesCollection FanChartSeries { get; set; }
 
         public double TempXAxisMin => _cpuTempPoints.Any() ? _cpuTempPoints.Min(p => p.X) : 0;
-        public double TempXAxisMax => _cpuTempPoints.Any() ? _cpuTempPoints.Max(p => p.X) : 60;
         public double FanXAxisMin => _moboFanPoints.Count > 0 ? _moboFanPoints.First().Value.Min(p => p.X) : 0;
-        public double FanXAxisMax => _moboFanPoints.Count > 0 ? _moboFanPoints.First().Value.Max(p => p.X) : 60;
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
 
         public Func<double, string> TimeElapsed { get; set; }
 
@@ -140,6 +150,11 @@ namespace MyHWMonitorWPFApp
                 // Dispatch sensor updates to UI
                 Dispatcher.Invoke(() =>
                 {
+                    if (cpuSensorItems.Count > 0 && gpuSensorItems.Count > 0)
+                    {
+                        IsLoading = false;
+                    }
+
                     MoboSensors.Clear();
                     foreach (var item in moboSensorItems)
                         MoboSensors.Add(item);
@@ -208,9 +223,7 @@ namespace MyHWMonitorWPFApp
                         _gpuFanPoints.RemoveAt(0);
 
                     OnPropertyChanged(nameof(TempXAxisMin));
-                    OnPropertyChanged(nameof(TempXAxisMax));
                     OnPropertyChanged(nameof(FanXAxisMin));
-                    OnPropertyChanged(nameof(FanXAxisMax));
                 });
             });
         }

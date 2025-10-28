@@ -2,101 +2,113 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        xmlns:local="clr-namespace:MyHWMonitorWPFApp.Utilities"
         Title="Temperature Dashboard" Height="800" Width="1000">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="1*" />
-        </Grid.ColumnDefinitions>
-        <!-- Sensor Lists -->
-        <GroupBox Header="{Binding CpuName}" Grid.Column="0" Grid.Row="0">
-            <StackPanel>
-                <ListView Name="CpuSensorListView">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                            <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
-                            <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
-                            <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <ListView Name="MoboSensorListView">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Fan" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                            <GridViewColumn Header="Value (RPM)" DisplayMemberBinding="{Binding Value}" Width="100"/>
-                            <GridViewColumn Header="Min (RPM)" DisplayMemberBinding="{Binding Min}" Width="100"/>
-                            <GridViewColumn Header="Max (RPM)" DisplayMemberBinding="{Binding Max}" Width="100"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+    <Window.Resources>
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Window.Resources>
+    <!-- Use Grid here as it allows layering (for loading overlay) -->
+    <Grid>
+        <!-- Main Content -->
+        <Grid Margin="10" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            <!-- Sensor Lists -->
+            <GroupBox Header="{Binding CpuName}" Grid.Column="0" Grid.Row="0">
+                <StackPanel>
+                    <ListView Name="CpuSensorListView">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                                <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                                <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                                <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <ListView Name="MoboSensorListView">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Fan" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                                <GridViewColumn Header="Value (RPM)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                                <GridViewColumn Header="Min (RPM)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                                <GridViewColumn Header="Max (RPM)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="{Binding GpuName}" Grid.Column="0" Grid.Row="1">
+                <StackPanel>
+                    <ListView Name="GpuSensorListView">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                                <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                                <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                                <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <ListView Name="GpuFanSensorListView">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Fan" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                                <GridViewColumn Header="Value (RPM)" DisplayMemberBinding="{Binding Value}" Width="100"/>
+                                <GridViewColumn Header="Min (RPM)" DisplayMemberBinding="{Binding Min}" Width="100"/>
+                                <GridViewColumn Header="Max (RPM)" DisplayMemberBinding="{Binding Max}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </StackPanel>
+            </GroupBox>
+            <!-- Charts -->
+            <GroupBox Header="Temperature" Grid.Column="1" Grid.Row="0">
+                <lvc:CartesianChart Series="{Binding TempChartSeries}" Height="200" Margin="0,0,0,20">
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
+                            <lvc:Axis.MinValue>
+                                <Binding Path="TempXAxisMin" />
+                            </lvc:Axis.MinValue>
+                        </lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Temperature (°C)" MinValue="0" MaxValue="100"/>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
+                </lvc:CartesianChart>
+            </GroupBox>
+            <GroupBox Header="Fan Speed" Grid.Column="1" Grid.Row="1">
+                <lvc:CartesianChart Series="{Binding FanChartSeries}" Height="200" Margin="0,0,0,0">
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
+                            <lvc:Axis.MinValue>
+                                <Binding Path="FanXAxisMin" />
+                            </lvc:Axis.MinValue>
+                        </lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Fan Speed (RPM)" MinValue="0" MaxValue="2000" />
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
+                </lvc:CartesianChart>
+            </GroupBox>
+        </Grid>
+        <!-- Loading Overlay -->
+        <Grid Background="White" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Loading hardware data..."
+                           Foreground="Black"
+                           FontSize="24"
+                           Margin="10"
+                           HorizontalAlignment="Center"/>
             </StackPanel>
-        </GroupBox>
-        <GroupBox Header="{Binding GpuName}" Grid.Column="0" Grid.Row="1">
-            <StackPanel>
-                <ListView Name="GpuSensorListView">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Sensor" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                            <GridViewColumn Header="Value (°C)" DisplayMemberBinding="{Binding Value}" Width="100"/>
-                            <GridViewColumn Header="Min (°C)" DisplayMemberBinding="{Binding Min}" Width="100"/>
-                            <GridViewColumn Header="Max (°C)" DisplayMemberBinding="{Binding Max}" Width="100"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <ListView Name="GpuFanSensorListView">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Fan" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                            <GridViewColumn Header="Value (RPM)" DisplayMemberBinding="{Binding Value}" Width="100"/>
-                            <GridViewColumn Header="Min (RPM)" DisplayMemberBinding="{Binding Min}" Width="100"/>
-                            <GridViewColumn Header="Max (RPM)" DisplayMemberBinding="{Binding Max}" Width="100"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </StackPanel>
-        </GroupBox>
-        <!-- Charts -->
-        <GroupBox Header="Temperature" Grid.Column="1" Grid.Row="0">
-            <lvc:CartesianChart Series="{Binding TempChartSeries}" Height="200" Margin="0,0,0,20">
-                <lvc:CartesianChart.AxisX>
-                    <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
-                        <lvc:Axis.MinValue>
-                            <Binding Path="TempXAxisMin" />
-                        </lvc:Axis.MinValue>
-                        <lvc:Axis.MaxValue>
-                            <Binding Path="TempXAxisMax" />
-                        </lvc:Axis.MaxValue>
-                    </lvc:Axis>
-                </lvc:CartesianChart.AxisX>
-                <lvc:CartesianChart.AxisY>
-                    <lvc:Axis Title="Temperature (°C)" MinValue="0" MaxValue="100"/>
-                </lvc:CartesianChart.AxisY>
-                <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
-            </lvc:CartesianChart>
-        </GroupBox>
-        <GroupBox Header="Fan Speed" Grid.Column="1" Grid.Row="1">
-            <lvc:CartesianChart Series="{Binding FanChartSeries}" Height="200" Margin="0,0,0,0">
-                <lvc:CartesianChart.AxisX>
-                    <lvc:Axis Title="Time" LabelFormatter="{Binding TimeElapsed}">
-                        <lvc:Axis.MinValue>
-                            <Binding Path="FanXAxisMin" />
-                        </lvc:Axis.MinValue>
-                        <lvc:Axis.MaxValue>
-                            <Binding Path="FanXAxisMax" />
-                        </lvc:Axis.MaxValue>
-                    </lvc:Axis>
-                </lvc:CartesianChart.AxisX>
-                <lvc:CartesianChart.AxisY>
-                    <lvc:Axis Title="Fan Speed (RPM)" MinValue="0" MaxValue="2000" />
-                </lvc:CartesianChart.AxisY>
-                <lvc:CartesianChart.LegendLocation>Bottom</lvc:CartesianChart.LegendLocation>
-            </lvc:CartesianChart>
-        </GroupBox>
+        </Grid>
     </Grid>
 </Window>
